@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>PaciON!</title>
+  <meta name="description" content="PaciON!: 13 jogos de Paciência grátis no navegador. Klondike, Spider, FreeCell, Pirâmide, Tri Peaks, Golf, Yukon, Canfield, Scorpion, Forty Thieves e Crescent, com dicas, desfazer e modo offline." />
+  <meta name="theme-color" content="#007ACC" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <script>/* aplica tema e animações antes de pintar (evita "piscar") */
+  try{var c=JSON.parse(localStorage.getItem('pacion.cfg')||'{}'),d=document.documentElement,r=c.reduzir;
+  if(r===undefined)r=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(c.escuro)d.setAttribute('data-tema','escuro');if(r)d.setAttribute('data-reduzir','1')}catch(e){}</script>
+  <link rel="stylesheet" href="on.css" />
+  <link rel="stylesheet" href="cartas.css" />
+  <link rel="stylesheet" href="colorido.css" />
+  <script defer src="on.js"></script>
+  <script defer src="cartas.js"></script>
+  <script defer src="regras.js"></script>
+  <script defer src="jogos.js"></script>
+  <script defer src="javinhas.js"></script>
+</head>
+<body>
+  <header>
+    <button id="menu-btn" type="button" aria-label="Abrir menu" aria-controls="drawer" data-abrir="drawer">☰</button>
+    <h1>PaciON!</h1>
+    <button id="howto-btn" class="header-btn" type="button" aria-haspopup="dialog" data-abrir="howto-modal">Como Jogar</button>
+  </header>
+
+  <div id="overlay" hidden></div>
+
+  <!-- Modal "Como Jogar": duas abas (usar o site e aprender cada jogo) -->
+  <div id="howto-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h2 id="howto-title">Como Jogar PaciON!</h2>
+        <button class="modal-x" type="button" aria-label="Fechar" data-fechar>✕</button>
+      </div>
+      <div class="abas" role="tablist" aria-label="Seções da ajuda">
+        <button class="aba" id="aba-usar" type="button" role="tab" aria-selected="true" aria-controls="painel-usar">Usar o site</button>
+        <button class="aba" id="aba-jogos" type="button" role="tab" aria-selected="false" aria-controls="painel-jogos" tabindex="-1">Aprender os jogos</button>
+      </div>
+
+      <div class="modal-body" id="painel-usar" role="tabpanel" aria-labelledby="aba-usar">
+        <h3>Escolher o jogo</h3>
+        <p>O botão no topo da mesa mostra o jogo atual. Toque nele para ver os 13 jogos, cada um com a miniatura da mesa e o nível de dificuldade. Cada jogo guarda a própria partida em andamento e as próprias estatísticas, então você pode trocar de jogo sem perder nada.</p>
+
+        <h3>Como mover as cartas</h3>
+        <ul>
+          <li><strong>Arraste</strong> uma carta (ou um grupo) até o destino. Os lugares onde ela pode ser solta ficam destacados.</li>
+          <li><strong>Toque</strong> numa carta para o jogo mandá-la sozinho para o melhor lugar: a fundação, se der, ou uma coluna.</li>
+          <li>Toque no <strong>estoque</strong> para comprar ou distribuir cartas. Quando ele é de reciclar, o espaço vazio vira o descarte de volta.</li>
+          <li>Na <strong>Pirâmide</strong>, toque numa carta e depois na outra que forma o par (ou arraste uma sobre a outra).</li>
+          <li>Cartas viradas para baixo abrem sozinhas quando ficam livres.</li>
+        </ul>
+
+        <h3>Botões</h3>
+        <ul>
+          <li><strong>Desfazer</strong> volta quantas jogadas você quiser.</li>
+          <li><strong>Dica</strong> mostra uma jogada possível e explica em palavras. No Klondike ela procura um caminho até a vitória. Nos outros jogos mostra uma boa jogada para o momento, sem garantir que o jogo tem solução.</li>
+          <li><strong>Completar</strong> aparece quando o resto do jogo é só mandar cartas para as fundações. O jogo termina sozinho.</li>
+          <li><strong>Embaralhar</strong> aparece só no Crescent.</li>
+          <li><strong>Novo jogo</strong> começa outra distribuição do jogo atual. Se houver partida em andamento, o jogo pergunta antes.</li>
+        </ul>
+
+        <h3>Opções do Klondike</h3>
+        <ul>
+          <li><strong>Compra</strong>: 1 carta (mais fácil) ou 3 cartas (mais difícil).</li>
+          <li><strong>Jogos</strong>: <em>Aleatórios</em> embaralham de verdade e nem todo jogo aleatório tem solução. Em <em>Com solução</em> o jogo procura, antes de começar, uma distribuição que dá para vencer. Leva poucos segundos.</li>
+        </ul>
+        <p>Trocar uma opção começa um jogo novo. Os outros jogos não têm opções, porque cada versão do Spider é um jogo à parte.</p>
+
+        <h3>Teclado</h3>
+        <div class="dica"><kbd>Espaço</kbd> compra ou distribui, <kbd>U</kbd> desfaz, <kbd>H</kbd> pede a dica e <kbd>N</kbd> começa um jogo novo.</div>
+
+        <h3>Sobre o site</h3>
+        <ul>
+          <li>A partida de cada jogo é salva sozinha, no próprio aparelho. Nada vai para a internet.</li>
+          <li>No menu ☰ ficam as estatísticas: partidas, vitórias, melhor tempo e sequência de vitórias, por jogo e no total.</li>
+          <li>Depois da primeira visita o site funciona offline. Dá para instalá-lo como app pelo menu ☰, quando o navegador permitir.</li>
+          <li>Som, vibração, tremor, modo escuro e redução de animações ficam no menu ☰.</li>
+        </ul>
+        <p class="legenda">As cartas são desenhadas pelo próprio site. Letras e números usam o Inter, sob a licença SIL OFL 1.1.</p>
+      </div>
+
+      <div class="modal-body" id="painel-jogos" role="tabpanel" aria-labelledby="aba-jogos" hidden>
+        <p class="intro-jogos">Toque no nome do jogo para ver as regras. O jogo que você está jogando agora vem aberto.</p>
+
+        <details id="ajuda-klondike">
+          <summary>Klondike <small>Paciência clássica</small></summary>
+          <div class="ajuda-mini" data-modo="klondike"></div>
+          <p><strong>Objetivo:</strong> levar as 52 cartas para as quatro fundações, uma por naipe, do ás ao rei.</p>
+          <p><strong>Montagem:</strong> sete colunas com 1, 2, 3 até 7 cartas, só a de cima virada para cima. As 24 cartas restantes formam o estoque, e as compradas vão para o descarte.</p>
+          <ul>
+            <li>Nas colunas, monte sequências em ordem decrescente e cores alternadas. Um 6 de copas vai sobre um 7 de paus ou de espadas.</li>
+            <li>Você pode mover uma carta ou um grupo de cartas abertas. A carta virada para baixo que ficar livre abre sozinha.</li>
+            <li>Só um rei (ou uma sequência que comece nele) entra numa coluna vazia.</li>
+            <li>Compre 1 ou 3 cartas por vez. Quando o estoque acaba, o descarte volta para ele quantas vezes você quiser. Na compra de 3, só a carta de cima do descarte está livre.</li>
+          </ul>
+          <p><strong>Pontos:</strong> descarte para coluna +5, qualquer carta para a fundação +10, desvirar uma carta +5, fundação de volta para coluna -15. Virar o descarte de volta custa -100 na compra de 1 e -20 a partir da terceira volta na compra de 3. A pontuação nunca fica abaixo de zero.</p>
+          <p><strong>Dica:</strong> antes de mover entre colunas, veja se o movimento libera uma carta virada para baixo. Se não libera, normalmente não vale. Esvaziar uma coluna só ajuda se você tiver um rei para colocar nela.</p>
+        </details>
+
+        <details id="ajuda-spider">
+          <summary>Spider <small>1, 2 ou 4 naipes</small></summary>
+          <div class="ajuda-mini" data-modo="spider1"></div>
+          <p><strong>Objetivo:</strong> formar 8 sequências completas do mesmo naipe, do rei ao ás. Cada sequência pronta sai do tabuleiro sozinha.</p>
+          <p><strong>Montagem:</strong> dois baralhos, 104 cartas. Dez colunas: as quatro primeiras com 6 cartas e as outras seis com 5, só a de cima aberta. As 50 cartas que sobram ficam no estoque.</p>
+          <ul>
+            <li>Uma carta vai sobre outra de valor um acima, de qualquer naipe. Mas um grupo só pode ser movido de uma vez se for do mesmo naipe e estiver em ordem.</li>
+            <li>Uma coluna vazia aceita qualquer carta ou grupo.</li>
+            <li>O estoque distribui uma carta em cada coluna, no máximo 5 vezes. Para distribuir, nenhuma coluna pode estar vazia.</li>
+            <li>Há três versões no seletor: <strong>1 naipe</strong> (a mais fácil), <strong>2 naipes</strong> e <strong>4 naipes</strong> (a mais difícil).</li>
+          </ul>
+          <p><strong>Dica:</strong> prefira jogadas que juntam cartas do mesmo naipe e tente esvaziar uma coluna antes de distribuir o estoque.</p>
+        </details>
+
+        <details id="ajuda-freecell">
+          <summary>FreeCell <small>Todas as cartas abertas</small></summary>
+          <div class="ajuda-mini" data-modo="freecell"></div>
+          <p><strong>Objetivo:</strong> levar as 52 cartas para as fundações, do ás ao rei por naipe.</p>
+          <p><strong>Montagem:</strong> oito colunas com todas as cartas viradas para cima (as quatro primeiras com 7, as outras com 6). No canto superior esquerdo ficam quatro células livres, e no direito as fundações.</p>
+          <ul>
+            <li>Nas colunas, a sequência é decrescente com cores alternadas, como no Klondike.</li>
+            <li>Cada célula livre guarda uma carta. Use-as para alcançar as cartas enterradas.</li>
+            <li>Dá para mover um grupo de cartas. O tamanho máximo é o número de células livres mais um, dobrando para cada coluna vazia. O jogo calcula isso e só aceita o que cabe.</li>
+            <li>Uma coluna vazia aceita qualquer carta ou grupo.</li>
+          </ul>
+          <p><strong>Dica:</strong> como tudo está à vista, dá para planejar vários lances antes de mexer. Evite encher as células e libere os ases e os 2 cedo.</p>
+        </details>
+
+        <details id="ajuda-piramide">
+          <summary>Pirâmide <small>Pares que somam 13</small></summary>
+          <div class="ajuda-mini" data-modo="piramide"></div>
+          <p><strong>Objetivo:</strong> desmontar a pirâmide juntando pares de cartas que somam 13.</p>
+          <p><strong>Montagem:</strong> 28 cartas abertas em sete fileiras (1 a 7 cartas), e 24 no estoque. Uma carta só pode ser usada quando nenhuma outra a cobre.</p>
+          <ul>
+            <li>Valores: ás 1, valete 11, dama 12, rei 13, as outras valem o próprio número.</li>
+            <li>Toque numa carta e depois na que forma o par (por exemplo 6 e 7, ou dama e ás). A carta de cima do descarte também entra nos pares.</li>
+            <li>O rei vale 13 sozinho: um toque e ele sai.</li>
+            <li>O estoque vira uma carta por vez, e só dá para passar por ele uma vez.</li>
+          </ul>
+          <p><strong>Dica:</strong> antes de comprar do estoque, procure todos os pares que já existem. Pense também em qual carta está cobrindo outras: tirar a de baixo libera várias.</p>
+        </details>
+
+        <details id="ajuda-tripeaks">
+          <summary>Tri Peaks <small>Três picos</small></summary>
+          <div class="ajuda-mini" data-modo="tripeaks"></div>
+          <p><strong>Objetivo:</strong> tirar todas as cartas dos três picos.</p>
+          <p><strong>Montagem:</strong> 28 cartas abertas formam três picos, em fileiras de 3, 6, 9 e 10 cartas. Uma carta vira o monte, no centro embaixo, e o resto vai para o estoque.</p>
+          <ul>
+            <li>Tire uma carta livre que seja um nível acima ou abaixo da carta do monte. Ela passa a ser a nova carta do monte.</li>
+            <li>O naipe não importa. O rei e o ás não são vizinhos.</li>
+            <li>Sem jogada possível, vire uma carta do estoque para o monte. Só dá para passar por ele uma vez.</li>
+          </ul>
+          <p><strong>Dica:</strong> monte sequências longas antes de recorrer ao estoque, e prefira tirar as cartas que descobrem outras.</p>
+        </details>
+
+        <details id="ajuda-golf">
+          <summary>Golf <small>Uma só passada</small></summary>
+          <div class="ajuda-mini" data-modo="golf"></div>
+          <p><strong>Objetivo:</strong> limpar as sete colunas.</p>
+          <p><strong>Montagem:</strong> sete colunas com 5 cartas abertas. Uma carta abre o monte e as outras 16 ficam no estoque, embaixo do tabuleiro.</p>
+          <ul>
+            <li>Só a carta de baixo de cada coluna está livre. Tire a que for um nível acima ou abaixo da carta do monte.</li>
+            <li>O naipe não importa e os valores não dão a volta: rei e ás não se encontram.</li>
+            <li>Sem jogada, vire a próxima carta do estoque. Só há uma passada.</li>
+          </ul>
+          <p><strong>Dica:</strong> olhe as colunas inteiras. Dá para ver de antemão quais cartas formam uma sequência e em que ordem tirá-las.</p>
+        </details>
+
+        <details id="ajuda-yukon">
+          <summary>Yukon <small>Sem estoque</small></summary>
+          <div class="ajuda-mini" data-modo="yukon"></div>
+          <p><strong>Objetivo:</strong> levar as 52 cartas para as fundações, do ás ao rei por naipe.</p>
+          <p><strong>Montagem:</strong> sete colunas. A primeira tem só uma carta aberta. Cada coluna seguinte tem uma carta virada para baixo a mais, e cinco abertas por cima. Não há estoque.</p>
+          <ul>
+            <li>A sequência é decrescente com cores alternadas.</li>
+            <li>Qualquer carta aberta pode ser movida junto com todas as que estão sobre ela, mesmo fora de ordem. Um 5 de paus com um 9 de ouros por cima vai sobre um 6 de copas.</li>
+            <li>Uma coluna vazia só aceita um rei ou um grupo que comece nele.</li>
+          </ul>
+          <p><strong>Dica:</strong> use essa liberdade de mover grupos para desvirar cartas e abrir colunas, e procure reis para as colunas vazias.</p>
+        </details>
+
+        <details id="ajuda-canfield">
+          <summary>Canfield <small>Reserva e carta base</small></summary>
+          <div class="ajuda-mini" data-modo="canfield"></div>
+          <p><strong>Objetivo:</strong> levar as 52 cartas para as fundações. Elas começam na carta base, sorteada na distribuição, e sobem por naipe passando do rei para o ás.</p>
+          <p><strong>Montagem:</strong> uma reserva de 13 cartas (só a de cima aberta), quatro colunas com uma carta cada, uma fundação já com a carta base e o resto no estoque. As outras três fundações começam quando surge uma carta do mesmo valor da base.</p>
+          <ul>
+            <li>Nas colunas, a sequência é decrescente com cores alternadas e os valores dão a volta: um rei pode ir sobre um ás.</li>
+            <li>A carta de cima da reserva vai para uma coluna ou para a fundação. Quando uma coluna esvazia, a reserva a preenche sozinha. Com a reserva vazia, qualquer carta ou grupo entra na coluna vazia.</li>
+            <li>O estoque compra 3 cartas por vez, sem limite de voltas. Só a carta de cima do descarte está livre.</li>
+          </ul>
+          <p><strong>Dica:</strong> esvaziar a reserva logo é o que mais ajuda, porque cada carta dela é uma carta que não está bloqueando nada.</p>
+        </details>
+
+        <details id="ajuda-scorpion">
+          <summary>Scorpion <small>Sequências do mesmo naipe</small></summary>
+          <div class="ajuda-mini" data-modo="scorpion"></div>
+          <p><strong>Objetivo:</strong> formar 4 sequências de rei a ás do mesmo naipe nas colunas. Cada uma pronta sai sozinha para a fundação.</p>
+          <p><strong>Montagem:</strong> sete colunas de 7 cartas. Nas quatro primeiras, as três de baixo ficam viradas para baixo. Nas outras três, todas abertas. Sobram 3 cartas no estoque.</p>
+          <ul>
+            <li>Uma carta vai sobre outra do mesmo naipe com valor um acima.</li>
+            <li>Qualquer carta aberta pode ser movida com todas as que estão sobre ela, mesmo fora de ordem.</li>
+            <li>Só um rei (ou um grupo que comece nele) entra numa coluna vazia.</li>
+            <li>Sem jogadas, o estoque distribui uma carta em cada uma das três primeiras colunas.</li>
+          </ul>
+          <p><strong>Dica:</strong> deixe o estoque para o fim. As três cartas dele cobrem outras e podem atrapalhar.</p>
+        </details>
+
+        <details id="ajuda-quarenta">
+          <summary>Forty Thieves <small>Dois baralhos</small></summary>
+          <div class="ajuda-mini" data-modo="quarenta"></div>
+          <p><strong>Objetivo:</strong> completar as 8 fundações, do ás ao rei, por naipe.</p>
+          <p><strong>Montagem:</strong> dois baralhos. Dez colunas com 4 cartas abertas (as 40 cartas que dão nome ao jogo) e 64 cartas no estoque.</p>
+          <ul>
+            <li>Nas colunas, a sequência é decrescente do mesmo naipe, e só se move uma carta por vez.</li>
+            <li>Uma coluna vazia aceita qualquer carta.</li>
+            <li>O estoque vira uma carta por vez para o descarte, e só há uma passada. A carta de cima do descarte pode ir para uma coluna ou fundação.</li>
+            <li>Cartas que chegam à fundação ficam lá.</li>
+          </ul>
+          <p><strong>Dica:</strong> é um dos jogos mais difíceis. Use o Desfazer à vontade para testar caminhos e pense antes de cobrir cartas úteis.</p>
+        </details>
+
+        <details id="ajuda-crescent">
+          <summary>Crescent <small>Fundações que sobem e descem</small></summary>
+          <div class="ajuda-mini" data-modo="crescent"></div>
+          <p><strong>Objetivo:</strong> completar as 8 fundações: quatro sobem do ás ao rei e quatro descem do rei ao ás, uma de cada naipe.</p>
+          <p><strong>Montagem:</strong> dois baralhos. As fundações começam com o ás ou o rei de cada naipe. As outras 96 cartas ficam abertas em 16 pilhas de 6.</p>
+          <ul>
+            <li>Mova uma carta por vez, a de cima de uma pilha.</li>
+            <li>Nas pilhas, a carta vai sobre outra do mesmo naipe com valor um acima ou um abaixo. Os valores dão a volta: rei com ás.</li>
+            <li>Também é possível levar uma carta da fundação de volta para as pilhas.</li>
+            <li>Espaços vazios ficam vazios.</li>
+            <li><strong>Embaralhar</strong> leva a carta de baixo de cada pilha para o topo. Você tem 9 chances por jogo.</li>
+          </ul>
+          <p><strong>Dica:</strong> acompanhe a direção de cada pilha. Duas pilhas apontando para o mesmo lado trancam cartas uma da outra.</p>
+        </details>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-primary" type="button" data-fechar data-foco>Entendi!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal "Escolher jogo" -->
+  <div id="jogos-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="jogos-title">
+    <div class="modal-content">
+      <div class="modal-head">
+        <h2 id="jogos-title">Escolher jogo</h2>
+        <button class="modal-x" type="button" aria-label="Fechar" data-fechar>✕</button>
+      </div>
+      <div class="modal-body" id="jogos-corpo"></div>
+    </div>
+  </div>
+
+  <main>
+    <section id="game-area" aria-label="Paciência">
+      <button id="modo-btn" type="button" aria-haspopup="dialog" data-abrir="jogos-modal">
+        <span id="modo-mini" aria-hidden="true"></span>
+        <span class="modo-txt"><span class="nivel-rotulo">Jogo</span><b id="modo-nome">Klondike</b></span>
+        <span class="modo-trocar">Trocar<span class="ic" id="modo-chevron"></span></span>
+      </button>
+
+      <div id="hud">
+        <div class="hud-box"><span class="hud-label" id="hud-rotulo">Pontos</span><b id="pontos">0</b></div>
+        <div class="hud-box"><span class="hud-label">Tempo</span><b id="tempo">0:00</b></div>
+        <div class="hud-box"><span class="hud-label">Jogadas</span><b id="jogadas">0</b></div>
+      </div>
+
+      <div id="mesa-box">
+        <div id="mesa" role="application" aria-label="Mesa de Paciência"></div>
+        <div id="tela" hidden>
+          <div class="tela-card" role="dialog" aria-live="polite">
+            <h2 id="tela-titulo"></h2>
+            <p id="tela-texto"></p>
+            <button id="tela-btn" class="btn btn-primary" type="button">Novo jogo</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="message-container"><div id="message-area" role="status" aria-live="polite"></div></div>
+
+      <div id="toolbar">
+        <button id="undo-btn" class="tool-btn" type="button">Desfazer</button>
+        <button id="hint-btn" class="tool-btn" type="button">Dica</button>
+        <button id="extra-btn" class="tool-btn" type="button" hidden>Embaralhar</button>
+        <button id="auto-btn" class="tool-btn tool-destaque" type="button" hidden>Completar</button>
+      </div>
+      <button id="restart-btn" class="btn btn-primary" type="button">Novo jogo</button>
+
+      <div id="config" aria-label="Opções da partida" hidden>
+        <div class="acc" id="acc-opcoes">
+          <button class="acc-btn" id="opcoes-btn" type="button" aria-expanded="false" aria-controls="opcoes-painel">
+            <span class="opc-txt"><span class="nivel-rotulo">Opções do Klondike</span><b id="opcoes-atual">Compra 1 carta</b></span>
+            <span class="ic" id="opcoes-chevron"></span>
+          </button>
+          <div class="acc-panel" id="opcoes-painel" role="region" aria-labelledby="opcoes-btn">
+            <div>
+              <div class="linha-cfg">
+                <span class="rotulo-cfg">Compra</span>
+                <div id="op-compra" class="seg" role="group" aria-label="Cartas por compra">
+                  <button class="seg-btn" type="button" data-v="1">1 carta</button>
+                  <button class="seg-btn" type="button" data-v="3">3 cartas</button>
+                </div>
+              </div>
+              <div class="linha-cfg">
+                <span class="rotulo-cfg">Jogos</span>
+                <div id="op-jogo" class="seg" role="group" aria-label="Tipo de jogo">
+                  <button class="seg-btn" type="button" data-v="aleatorio">Aleatórios</button>
+                  <button class="seg-btn" type="button" data-v="solucao">Com solução</button>
+                </div>
+              </div>
+              <p id="opcoes-aviso">Trocar uma opção começa um jogo novo.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p class="assinatura-final">© Christian, 2026</p>
+  </footer>
+</body>
+</html>

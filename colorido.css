@@ -1,0 +1,724 @@
+/* ==========================================================================
+   PaciON! — colorido.css  (só o que é do jogo)
+   Header, menu, modais, rodapé, botões e scrollbar vêm de on.css.
+   O desenho das cartas vem de cartas.css (par do cartas.js).
+
+   Índice
+   1. Variáveis e layout
+   2. Botão do jogo atual e placar
+   3. Mesa e espaços
+   4. Tela de vitória
+   5. Mensagem, botões e opções
+   6. Escolher jogo
+   7. Como Jogar (abas e jogos)
+   8. Modo escuro
+   9. Responsividade
+   ========================================================================== */
+
+/* ==========================================================================
+   1. Variáveis e layout
+   ========================================================================== */
+:root {
+    --tab-max: 980px;
+    --mesa-borda: rgba(144, 202, 249, 0.3);
+    --mesa-fundo: rgba(6, 47, 81, 0.45);
+}
+
+main {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10px 6px 4px;
+}
+
+#game-area {
+    width: 100%;
+    max-width: var(--tab-max);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-width: 0;
+}
+
+/* ==========================================================================
+   2. Botão do jogo atual e placar
+   ========================================================================== */
+#modo-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 56px;
+    padding: 6px 12px 6px 8px;
+    border-radius: 12px;
+    border: 2px solid var(--mesa-borda);
+    background: var(--mesa-fundo);
+    color: var(--light-blue);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+#modo-btn:active { transform: scale(0.99); }
+
+#modo-btn:focus-visible {
+    outline: 3px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+#modo-mini {
+    flex-shrink: 0;
+    display: block;
+    width: 64px;
+}
+
+#modo-mini svg,
+.tile-mini svg,
+.ajuda-mini svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.modo-txt {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.nivel-rotulo {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(144, 202, 249, 0.9);
+}
+
+#modo-nome {
+    color: #fff;
+    font-size: 1.15rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.modo-trocar {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--light-blue);
+}
+
+#hud {
+    display: flex;
+    gap: 8px;
+}
+
+.hud-box {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    border: 2px solid var(--mesa-borda);
+    background: var(--mesa-fundo);
+    min-height: 54px;
+}
+
+.hud-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(144, 202, 249, 0.9);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hud-box b {
+    font-size: 1.35rem;
+    line-height: 1;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+.hud-box b.sobe { animation: sobe 0.3s var(--ease); }
+
+@keyframes sobe {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.3); color: var(--semi-correct); }
+    100% { transform: scale(1); }
+}
+
+/* ==========================================================================
+   3. Mesa e espaços
+   ========================================================================== */
+#mesa-box {
+    position: relative;
+    border-radius: 16px;
+    border: 2px solid var(--mesa-borda);
+    background: var(--mesa-fundo);
+    overflow: hidden;
+}
+
+#mesa {
+    --w: 56px;
+    --h: 80px;
+    --ic-recicla: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z'/%3E%3Cpath d='M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466'/%3E%3C/svg%3E");
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(144, 202, 249, 0.45) transparent;
+}
+
+#mesa.arrastando-ativo { overflow-x: hidden; }
+
+#mesa-esp {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+
+.slot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--w);
+    height: var(--h);
+    margin: 0;
+    padding: 0;
+    border-radius: calc(var(--w) * 0.1);
+    border: 2px dashed rgba(144, 202, 249, 0.28);
+    background: rgba(144, 202, 249, 0.06);
+    color: rgba(144, 202, 249, 0.42);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6%;
+    box-sizing: border-box;
+    appearance: none;
+    font: inherit;
+    font-weight: 800;
+    font-size: calc(var(--w) * 0.36);
+    line-height: 1;
+    pointer-events: none;
+}
+
+.slot .mk-naipe { width: 46%; height: auto; fill: currentColor; display: block; }
+.slot .mk-naipe.peq { width: 34%; }
+.slot .mk-txt { font-family: "Inter", system-ui, sans-serif; }
+.slot .mk-txt.peq { font-size: 0.62em; }
+
+.slot-est {
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.slot-est:focus-visible {
+    outline: 3px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+.slot-est.recicla::after {
+    content: "";
+    width: 46%;
+    height: 46%;
+    background: currentColor;
+    -webkit-mask: var(--ic-recicla) center / contain no-repeat;
+    mask: var(--ic-recicla) center / contain no-repeat;
+}
+
+.slot.alvo {
+    border-color: rgba(251, 192, 45, 0.95);
+    background: rgba(251, 192, 45, 0.16);
+}
+
+/* só as cartas viradas para cima, soltas na mesa, aceitam o dedo para arrastar */
+.carta { touch-action: manipulation; }
+.carta.pega { touch-action: none; }
+
+.carta.pega:focus-visible { outline: 3px solid var(--accent-blue); outline-offset: 2px; }
+
+.carta.sel .frente {
+    box-shadow: 0 0 0 3px #64b5f6, 0 0 14px 3px rgba(100, 181, 246, 0.8);
+}
+
+/* ==========================================================================
+   4. Tela de vitória
+   ========================================================================== */
+#tela {
+    position: absolute;
+    inset: 0;
+    z-index: 4000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(6, 30, 56, 0.45);
+    animation: aparece 0.35s var(--ease);
+}
+
+#tela[hidden] { display: none; }
+
+@keyframes aparece {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.tela-card {
+    width: min(100%, 320px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    padding: 18px 18px 16px;
+    border-radius: 14px;
+    border: 2px solid rgba(144, 202, 249, 0.6);
+    background: rgba(8, 35, 59, 0.95);
+    color: #fff;
+}
+
+.tela-card h2 { margin: 0; font-size: 1.5rem; }
+
+.tela-card p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--light-blue);
+    line-height: 1.45;
+}
+
+.tela-card .btn { margin-top: 6px; width: 100%; }
+
+/* ==========================================================================
+   5. Mensagem, botões e opções
+   ========================================================================== */
+#message-container {
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#message-area {
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--light-blue);
+}
+
+#toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tool-btn {
+    flex: 1 1 0;
+    min-width: 76px;
+    background: rgba(227, 242, 253, 0.1);
+    border: 2px solid rgba(144, 202, 249, 0.5);
+    color: var(--light-blue);
+    padding: 6px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    min-height: 44px;
+}
+
+.tool-btn[hidden] { display: none; }
+
+.tool-btn:active:not(:disabled) {
+    background: rgba(227, 242, 253, 0.2);
+    transform: scale(0.97);
+}
+
+.tool-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.tool-destaque {
+    background: #2e7d32;
+    border-color: #66bb6a;
+    color: #fff;
+}
+
+#restart-btn { margin-bottom: 0; }
+
+#config { padding: 0 0 12px; }
+#config[hidden] { display: none; }
+
+#opcoes-btn { padding: 10px 14px; }
+
+#opcoes-btn .opc-txt {
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+#opcoes-atual {
+    color: #fff;
+    font-size: 1.02rem;
+    line-height: 1.2;
+}
+
+#opcoes-painel > div { padding-top: 4px; }
+#opcoes-painel .linha-cfg + .linha-cfg { margin-top: 8px; }
+
+.linha-cfg {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.rotulo-cfg {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(144, 202, 249, 0.9);
+    flex-shrink: 0;
+}
+
+.seg {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    max-width: 300px;
+}
+
+.seg-btn {
+    flex: 1;
+    background: rgba(227, 242, 253, 0.1);
+    border: 2px solid rgba(144, 202, 249, 0.5);
+    color: var(--light-blue);
+    padding: 6px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    min-height: 40px;
+}
+
+.seg-btn:active:not(:disabled) {
+    background: rgba(227, 242, 253, 0.2);
+    transform: scale(0.96);
+}
+
+.seg-btn[aria-pressed="true"] {
+    background: #1976d2;
+    border-color: rgba(144, 202, 249, 0.9);
+    color: #fff;
+}
+
+.seg-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+#opcoes-aviso {
+    margin: 10px 0 0;
+    font-size: 0.78rem;
+    color: #a7c7f7;
+}
+
+/* ==========================================================================
+   6. Escolher jogo
+   ========================================================================== */
+#jogos-modal .modal-body { gap: 0; }
+
+.sec-jogos + .sec-jogos { margin-top: 18px; }
+
+.sec-jogos h3 {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.sec-jogos .sec-sub {
+    margin: 2px 0 8px;
+    font-size: 0.82rem;
+    color: var(--modal-sub);
+}
+
+.tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+    gap: 8px;
+}
+
+.tile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px 8px 8px;
+    text-align: left;
+    font: inherit;
+    color: var(--modal-text);
+    background: rgba(13, 60, 117, 0.05);
+    border: 2px solid var(--modal-line);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.tile:active { transform: scale(0.985); }
+
+.tile:focus-visible {
+    outline: 3px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+.tile[aria-current="true"] {
+    border-color: #1976d2;
+    background: rgba(25, 118, 210, 0.12);
+}
+
+.tile-mini {
+    flex-shrink: 0;
+    width: 74px;
+}
+
+.tile-txt {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+}
+
+.tile-nome {
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--modal-title);
+    overflow-wrap: anywhere;
+    line-height: 1.15;
+}
+
+.tile-dif {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--modal-sub);
+}
+
+.pontos-dif { display: inline-flex; gap: 3px; flex-shrink: 0; }
+
+.pontos-dif i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(13, 60, 117, 0.22);
+}
+
+.pontos-dif i.on { background: #1976d2; }
+
+.tile-desc {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: var(--modal-text);
+    opacity: 0.88;
+}
+
+.tile-selo {
+    align-self: flex-start;
+    margin-top: 2px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    background: #1976d2;
+    color: #fff;
+}
+
+.tile-selo.andamento { background: #2e7d32; }
+
+/* ==========================================================================
+   7. Como Jogar (abas e jogos)
+   ========================================================================== */
+.abas {
+    display: flex;
+    gap: 6px;
+    padding: 10px 24px 0;
+    border-bottom: 1px solid var(--modal-line);
+}
+
+.aba {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 8px;
+    border: 2px solid var(--modal-line);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    background: transparent;
+    color: var(--modal-sub);
+    font-weight: 800;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.aba[aria-selected="true"] {
+    background: #1976d2;
+    border-color: #1976d2;
+    color: #fff;
+}
+
+.aba:focus-visible {
+    outline: 3px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+.modal-body[hidden] { display: none; }
+
+.intro-jogos { font-weight: 600; }
+
+#painel-jogos details {
+    border: 1px solid var(--modal-line);
+    border-radius: 10px;
+    padding: 0 12px;
+    background: rgba(13, 60, 117, 0.04);
+}
+
+#painel-jogos details + details { margin-top: 8px; }
+
+#painel-jogos summary {
+    cursor: pointer;
+    padding: 11px 0;
+    font-weight: 800;
+    color: var(--modal-title);
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+#painel-jogos summary small {
+    margin-left: auto;
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: var(--modal-sub);
+    text-align: right;
+}
+
+#painel-jogos summary::-webkit-details-marker { display: none; }
+
+#painel-jogos summary::after {
+    content: "+";
+    font-size: 1.3rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+#painel-jogos details[open] summary::after { content: "–"; }
+#painel-jogos details[open] { padding-bottom: 12px; }
+#painel-jogos details > * + * { margin-top: 10px; }
+
+#painel-jogos summary:focus-visible {
+    outline: 3px solid var(--accent-blue);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+.ajuda-mini {
+    width: min(100%, 240px);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ajuda-mini svg { border-radius: 8px; }
+
+/* ==========================================================================
+   8. Modo escuro
+   ========================================================================== */
+html[data-tema="escuro"] {
+    --mesa-fundo: rgba(3, 12, 24, 0.7);
+}
+
+html[data-tema="escuro"] .verso { filter: brightness(0.85); }
+
+html[data-tema="escuro"] .tile { background: rgba(144, 202, 249, 0.07); }
+html[data-tema="escuro"] .tile[aria-current="true"] { background: rgba(25, 118, 210, 0.3); }
+html[data-tema="escuro"] .pontos-dif i { background: rgba(144, 202, 249, 0.25); }
+html[data-tema="escuro"] .pontos-dif i.on { background: #64b5f6; }
+html[data-tema="escuro"] #painel-jogos details { background: rgba(144, 202, 249, 0.06); }
+
+/* ==========================================================================
+   9. Responsividade
+   ========================================================================== */
+@media (hover: hover) {
+    .seg-btn:hover:not(:disabled),
+    .tool-btn:hover:not(:disabled),
+    #modo-btn:hover {
+        background: rgba(227, 242, 253, 0.18);
+        border-color: rgba(144, 202, 249, 0.8);
+    }
+
+    .seg-btn[aria-pressed="true"]:hover:not(:disabled) { background: #1976d2; }
+
+    .carta.pega:hover .frente { filter: brightness(0.97); }
+
+    .tool-destaque:hover:not(:disabled) { background: #388e3c; }
+
+    .tile:hover { border-color: #1976d2; }
+}
+
+@media (max-width: 420px) {
+    main { padding: 8px 4px 4px; }
+
+    .rotulo-cfg { font-size: 0.72rem; }
+
+    .seg-btn { font-size: 0.8rem; padding: 4px; }
+
+    .hud-box b { font-size: 1.2rem; }
+
+    .abas { padding: 8px 14px 0; }
+}
+
+@media (max-width: 300px) {
+    #modo-btn { gap: 8px; padding: 6px 8px 6px 6px; }
+    #modo-mini { width: 48px; }
+    #modo-nome { font-size: 1rem; }
+    .modo-trocar { font-size: 0; }          /* só o ícone */
+    .hud-box { padding: 6px 4px; }
+    .hud-label { font-size: 0.62rem; letter-spacing: 0.02em; }
+    .hud-box b { font-size: 1.05rem; }
+    .tool-btn { min-width: 0; font-size: 0.8rem; padding: 4px; }
+    .tile { flex-direction: column; align-items: flex-start; padding: 8px; gap: 6px; }
+    .tile-mini { width: 100%; max-width: 130px; }
+    .tile-txt { width: 100%; }
+    .tile-dif { flex-wrap: wrap; gap: 2px 6px; }
+    .aba { font-size: 0.78rem; padding: 8px 4px; }
+    #painel-jogos summary small { display: none; }
+}
