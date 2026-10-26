@@ -19,7 +19,7 @@
    1. Variáveis e layout
    ========================================================================== */
 :root {
-    --tab-max: 980px;
+    --tab-max: 1360px;      /* largura máxima do jogo (no PC) */
     --mesa-borda: rgba(144, 202, 249, 0.3);
     --mesa-fundo: rgba(6, 47, 81, 0.45);
 }
@@ -168,6 +168,10 @@ main {
    ========================================================================== */
 #mesa-box {
     position: relative;
+    /* camada própria: a tela de fim (z-index 4000) e as cartas da vitória ficam acima de tudo
+       DENTRO da mesa, mas abaixo do cabeçalho, do menu e dos modais */
+    z-index: 1;
+    isolation: isolate;
     border-radius: 16px;
     border: 2px solid var(--mesa-borda);
     background: var(--mesa-fundo);
@@ -277,6 +281,7 @@ main {
     align-items: center;
     justify-content: center;
     padding: 16px;
+    overflow-y: auto;
     background: rgba(6, 30, 56, 0.45);
     animation: aparece 0.35s var(--ease);
 }
@@ -289,7 +294,8 @@ main {
 }
 
 .tela-card {
-    width: min(100%, 320px);
+    width: min(100%, 340px);
+    margin: auto;           /* centraliza e, se a caixa for baixa, a tela rola em vez de cortar */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -692,6 +698,59 @@ html[data-tema="escuro"] #painel-jogos details { background: rgba(144, 202, 249,
     .tool-destaque:hover:not(:disabled) { background: #388e3c; }
 
     .tile:hover { border-color: #1976d2; }
+}
+
+/* --------------------------------------------------------------------------
+   Tela deitada (celular na horizontal, tablet, PC): os controles vão para uma coluna
+   à esquerda e a mesa ocupa toda a altura da tela. Sem isso os controles em cima
+   comiam metade da altura e as cartas ficavam pequenas, com muito espaço nas laterais.
+   -------------------------------------------------------------------------- */
+@media (orientation: landscape) and (min-width: 540px) {
+    :root { --painel: clamp(150px, 21vw, 250px); }
+
+    main { padding: 8px 8px 4px; }
+
+    #game-area {
+        display: grid;
+        grid-template-columns: var(--painel) minmax(0, 1fr);
+        grid-template-rows: repeat(6, auto) 1fr;
+        column-gap: 10px;
+        row-gap: 8px;
+        align-items: start;
+    }
+
+    #modo-btn, #hud, #message-container, #toolbar, #restart-btn, #config { grid-column: 1; }
+    #modo-btn { grid-row: 1; }
+    #hud { grid-row: 2; }
+    #message-container { grid-row: 3; min-height: 0; }
+    #toolbar { grid-row: 4; }
+    #restart-btn { grid-row: 5; }
+    #config { grid-row: 6; padding-bottom: 0; }
+    #mesa-box { grid-column: 2; grid-row: 1 / -1; }
+
+    /* painel estreito: peças menores e empilhadas */
+    #modo-btn { min-height: 48px; gap: 8px; padding: 5px 8px 5px 6px; }
+    #modo-mini { width: 44px; }
+    #modo-nome { font-size: 1.02rem; }
+    .modo-trocar { font-size: 0; }                 /* só o ícone */
+    #hud { flex-direction: column; gap: 6px; }
+    .hud-box { flex-direction: row; justify-content: space-between; min-height: 38px; padding: 4px 10px; }
+    .hud-box b { font-size: 1.15rem; }
+    .tool-btn { min-width: 0; min-height: 40px; font-size: 0.88rem; }
+    #restart-btn { padding: 8px 12px; min-height: 42px; }
+    #message-area { font-size: 0.85rem; }
+}
+
+/* altura curta (celular deitado): tudo mais compacto, o cabeçalho também */
+@media (orientation: landscape) and (max-height: 520px) {
+    :root { --header-height: 48px; }
+
+    header h1 { font-size: 1.15rem; }
+
+    .tela-card { padding: 12px 14px; gap: 6px; }
+    .tela-card h2 { font-size: 1.25rem; }
+    .tela-card p { font-size: 0.85rem; line-height: 1.35; }
+    #tela { padding: 8px; }
 }
 
 @media (max-width: 420px) {

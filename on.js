@@ -1,22 +1,26 @@
 /* ==========================================================================
-   on.js: base compartilhada dos jogos ON!
+   on.js: base compartilhada dos jogos ON!   (versão em ON.version)
    Idêntico em todos os projetos (edite em Base-Compartilhada/_shared e rode sync.ps1).
 
    Cuida de: menu lateral (atalho Outros Jogos, estatísticas, configurações,
    instalar app, redes em acordeão, pix), modais no padrão DiciON!,
-   confirmação de "novo jogo", sons sintetizados e vibração.
+   confirmação de "novo jogo", botão Voltar do celular, sons sintetizados e vibração.
 
    Uso no jogo:
      ON.init({
        id: 'dicion', nome: 'DiciON!',
-       configuracoes: ['som', 'vibracao', 'escuro', 'reduzir'],
+       configuracoes: ['som', 'vibracao', 'tremor', 'escuro', 'reduzir'],
        estatisticas: () => [{ rotulo: 'Partidas', valor: 12 }, ...],
        zerarEstatisticas: () => { ... },
+       qrpix: 'assets/qrpix.png',   // opcional (esse já é o padrão)
+       pix: true,                   // opcional: false esconde o bloco do Pix
      });
    ========================================================================== */
 (function () {
   'use strict';
 
+  var VERSAO = '2.0.0';
+  var ESQUEMA = 2; // versão do formato salvo em <id>.cfg
   var HUB = 'https://speccygames.netlify.app/';
 
   /* Só os rótulos; o ícone de cada opção vem de iconeOpcao() */
@@ -27,7 +31,8 @@
     reduzir: 'Reduzir animações',
     tremor: 'Tremor da tela'
   };
-  var CFG_PADRAO = { som: true, vibracao: true, escuro: false, tremor: true };
+  /* O tema (escuro) não tem padrão fixo: sem escolha salva, segue o aparelho (ver lerConfig) */
+  var CFG_PADRAO = { som: true, vibracao: true, tremor: true };
 
   /* Padrões de vibração (ms: vibra, pausa, vibra...). O celular só vibra se o navegador
      permitir (Android/Chrome sim; Safari do iPhone não tem essa API). */
@@ -62,6 +67,9 @@
     controle: bi('<path d="M11.5 6.027a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m-1.5 1.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m2.5-.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0m-1.5 1.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1m-6.5-3h1v1h1v1h-1v1h-1v-1h-1v-1h1z"/><path d="M3.051 3.26a.5.5 0 0 1 .354-.613l1.932-.518a.5.5 0 0 1 .62.39c.655-.079 1.35-.117 2.043-.117.72 0 1.443.041 2.12.126a.5.5 0 0 1 .622-.399l1.932.518a.5.5 0 0 1 .306.729q.211.136.373.297c.408.408.78 1.05 1.095 1.772.32.733.599 1.591.805 2.466s.34 1.78.364 2.606c.024.816-.059 1.602-.328 2.21a1.42 1.42 0 0 1-1.445.83c-.636-.067-1.115-.394-1.513-.773-.245-.232-.496-.526-.739-.808-.126-.148-.25-.292-.368-.423-.728-.804-1.597-1.527-3.224-1.527s-2.496.723-3.224 1.527c-.119.131-.242.275-.368.423-.243.282-.494.575-.739.808-.398.38-.877.706-1.513.773a1.42 1.42 0 0 1-1.445-.83c-.27-.608-.352-1.395-.329-2.21.024-.826.16-1.73.365-2.606.206-.875.486-1.733.805-2.466.315-.722.687-1.364 1.094-1.772a2.3 2.3 0 0 1 .433-.335l-.028-.079zm2.036.412c-.877.185-1.469.443-1.733.708-.276.276-.587.783-.885 1.465a14 14 0 0 0-.748 2.295 12.4 12.4 0 0 0-.339 2.406c-.022.755.062 1.368.243 1.776a.42.42 0 0 0 .426.24c.327-.034.61-.199.929-.502.212-.202.4-.423.615-.674.133-.156.276-.323.44-.504C4.861 9.969 5.978 9.027 8 9.027s3.139.942 3.965 1.855c.164.181.307.348.44.504.214.251.403.472.615.674.318.303.601.468.929.503a.42.42 0 0 0 .426-.241c.18-.408.265-1.02.243-1.776a12.4 12.4 0 0 0-.339-2.406 14 14 0 0 0-.748-2.295c-.298-.682-.61-1.19-.885-1.465-.264-.265-.856-.523-1.733-.708-.85-.179-1.877-.27-2.913-.27s-2.063.091-2.913.27"/>'),
     notebook: bi('<path d="M13.5 3a.5.5 0 0 1 .5.5V11H2V3.5a.5.5 0 0 1 .5-.5zm-11-1A1.5 1.5 0 0 0 1 3.5V12h14V3.5A1.5 1.5 0 0 0 13.5 2zM0 12.5h16a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5"/>'),
     estrela: bi('<path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"/>'),
+    /* celular parado (vibração desligada) */
+    celular: bi('<path d="M11 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM5 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/><path d="M8 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>'),
+    /* celular vibrando (vibração ligada) */
     vibracao: bi('<path d="M10 3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM6 2a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z"/><path d="M8 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2M1.599 4.058a.5.5 0 0 1 .208.676A7 7 0 0 0 1 8c0 1.18.292 2.292.807 3.266a.5.5 0 0 1-.884.468A8 8 0 0 1 0 8c0-1.347.334-2.619.923-3.734a.5.5 0 0 1 .676-.208m12.802 0a.5.5 0 0 1 .676.208A8 8 0 0 1 16 8a8 8 0 0 1-.923 3.734.5.5 0 0 1-.884-.468A7 7 0 0 0 15 8c0-1.18-.292-2.292-.807-3.266a.5.5 0 0 1 .208-.676M3.057 5.534a.5.5 0 0 1 .284.648A5 5 0 0 0 3 8c0 .642.12 1.255.34 1.818a.5.5 0 1 1-.93.364A6 6 0 0 1 2 8c0-.769.145-1.505.41-2.182a.5.5 0 0 1 .647-.284m9.886 0a.5.5 0 0 1 .648.284C13.855 6.495 14 7.231 14 8s-.145 1.505-.41 2.182a.5.5 0 0 1-.93-.364C12.88 9.255 13 8.642 13 8s-.12-1.255-.34-1.818a.5.5 0 0 1 .283-.648"/>'),
     tremor: bi('<path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/>'),
     grafico: bi('<path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z"/>'),
@@ -89,9 +97,51 @@
     return '<span class="troca" data-b="' + (ativoB ? '1' : '0') + '">' + icone(a, px) + icone(b, px) + '</span>';
   };
   var trocar = function (raiz, ativoB) {
-    var t = raiz && (raiz.classList && (raiz.classList.contains('troca') || raiz.classList.contains('som-ico')) ? raiz : raiz.querySelector('.troca, .som-ico'));
-    if (t) t.setAttribute('data-b', ativoB ? '1' : '0');
+    var t = raiz && (raiz.classList && (raiz.classList.contains('troca') || raiz.classList.contains('som-ico') || raiz.classList.contains('vib-ico')) ? raiz : raiz.querySelector('.troca, .som-ico, .vib-ico'));
+    if (!t) return;
+    t.setAttribute('data-b', ativoB ? '1' : '0');
+    if (t.classList.contains('vib-ico')) balancar(t);
   };
+
+  /* Celular: parado (desligado) ou vibrando (ligado). Ao trocar, balança da esquerda
+     para a direita, como se vibrasse de verdade. Com "Reduzir animações" não balança. */
+  var iconeVibracao = function (ligado, px) {
+    return '<span class="vib-ico" data-b="' + (ligado ? '1' : '0') + '">' + icone('celular', px) + icone('vibracao', px) + '</span>';
+  };
+  function balancar(no) {
+    no.classList.remove('vibrando');
+    void no.offsetWidth; // reinicia a animação se ainda estava balançando
+    no.classList.add('vibrando');
+    clearTimeout(no._balanco);
+    no._balanco = setTimeout(function () { no.classList.remove('vibrando'); }, 700);
+  }
+
+  /* Tremor da tela: X no canto inferior direito quando desligado.
+     Ao ligar, o X se desfaz e o raio pisca enquanto oscila na diagonal
+     nos dois sentidos (↗ ↙), com amplitudes iguais e retorno à origem.
+     Sem brilho e independente de ON.tremer(). */
+  function iconeTremor(ligado, px) {
+    px = px || 20;
+    return '<span class="tremor-ico" data-b="' + (ligado ? '1' : '0') + '">' +
+      '<span class="tremor-raio">' + icone('tremor', px) + '</span>' +
+      '<svg class="tremor-x" xmlns="http://www.w3.org/2000/svg" ' +
+      'width="11" height="11" viewBox="0 0 12 12" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" ' +
+      'aria-hidden="true" focusable="false">' +
+      '<path d="M2 2 10 10"/><path d="M10 2 2 10"/>' +
+      '</svg></span>';
+  }
+
+  function atualizarTremorIcone(marca, ligado) {
+    var no = marca && marca.querySelector('.tremor-ico');
+    if (!no) return;
+    no.classList.remove('ativando');
+    no.setAttribute('data-b', ligado ? '1' : '0');
+    if (ligado && !ON.cfg.reduzir) {
+      void no.offsetWidth; // permite reiniciar após alternâncias rápidas
+      no.classList.add('ativando');
+    }
+  }
 
   /* Alto-falante animado: o corpo fica parado e só as "vibrações" (as 3 ondas e o X de mudo)
      trocam, uma de cada vez, com degradê. data-b="1" = som ligado. */
@@ -135,18 +185,31 @@
     }
   };
 
-  var ON = { store: store, cfg: {}, config: null, icone: icone, iconeTroca: iconeTroca, iconeSom: iconeSom, trocar: trocar, redes: REDES, hub: HUB };
+  var ON = {
+    version: VERSAO, store: store, cfg: {}, config: null,
+    icone: icone, iconeTroca: iconeTroca, iconeSom: iconeSom, iconeVibracao: iconeVibracao, trocar: trocar,
+    redes: REDES, hub: HUB
+  };
   window.ON = ON;
 
   var html = document.documentElement;
   var overlay, drawer, camadaAtual = null, focoAnterior = null, instalar = null;
   var aoFechar = null;
+  var iniciado = false;
+  var ouvintes = [];       // todos os ouvintes registrados, para ON.destruir() limpar
+  var confirmacao = null;  // resolve da confirmação aberta (só uma por vez)
+
+  /* registra um ouvinte e guarda para poder remover depois */
+  function ouvir(alvo, tipo, fn, opcoes) {
+    alvo.addEventListener(tipo, fn, opcoes);
+    ouvintes.push([alvo, tipo, fn, opcoes]);
+  }
 
   function el(tag, attrs, filhos) {
     var n = document.createElement(tag);
     if (attrs) for (var k in attrs) {
       if (k === 'text') n.textContent = attrs[k];
-      else if (k === 'html') n.innerHTML = attrs[k];
+      else if (k === 'html') n.innerHTML = attrs[k]; // só com SVG/ícones feitos aqui dentro
       else n.setAttribute(k, attrs[k]);
     }
     (filhos || []).forEach(function (f) { n.appendChild(f); });
@@ -154,19 +217,34 @@
   }
 
   /* ---------- configurações ---------- */
+  var mqEscuro = null;
+  try { mqEscuro = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null; } catch (e) { /* ignora */ }
+  function sistemaEscuro() { return !!(mqEscuro && mqEscuro.matches); }
+
+  function bool(v, padrao) { return v === undefined || v === null ? padrao : !!v; }
+
+  /* Lê <id>.cfg com segurança: aceita vazio, lixo ou formato antigo, usa os padrões e
+     preserva chaves que o jogo tenha guardado ali. Tema: 'claro'/'escuro' só se a pessoa
+     escolheu; sem escolha (tema = null) o jogo segue o aparelho. Formato antigo: escuro:true
+     vira escolha "escuro"; escuro:false não dizia nada (era só o valor inicial), então segue o aparelho. */
   function lerConfig(id) {
-    var c = store.get(id + '.cfg', {});
+    var c = store.get(id + '.cfg', null);
+    if (!c || typeof c !== 'object' || Array.isArray(c)) c = {};
     var r = c.reduzir;
-    if (r === undefined) {
-      r = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (r === undefined || r === null) {
+      r = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     }
-    return {
-      som: c.som !== undefined ? !!c.som : CFG_PADRAO.som,
-      vibracao: c.vibracao !== undefined ? !!c.vibracao : CFG_PADRAO.vibracao,
-      escuro: c.escuro !== undefined ? !!c.escuro : CFG_PADRAO.escuro,
-      tremor: c.tremor !== undefined ? !!c.tremor : CFG_PADRAO.tremor,
-      reduzir: !!r
-    };
+    var tema = c.tema === 'escuro' || c.tema === 'claro' ? c.tema : (c.escuro === true ? 'escuro' : null);
+    var cfg = {};
+    for (var k in c) if (Object.prototype.hasOwnProperty.call(c, k)) cfg[k] = c[k];
+    cfg.v = ESQUEMA;
+    cfg.som = bool(c.som, CFG_PADRAO.som);
+    cfg.vibracao = bool(c.vibracao, CFG_PADRAO.vibracao);
+    cfg.tremor = bool(c.tremor, CFG_PADRAO.tremor);
+    cfg.reduzir = !!r;
+    cfg.tema = tema;
+    cfg.escuro = tema ? tema === 'escuro' : sistemaEscuro();
+    return cfg;
   }
 
   function aplicarConfig() {
@@ -178,9 +256,27 @@
   }
 
   function salvarConfig() {
-    store.set(ON.config.id + '.cfg', ON.cfg);
+    var o = {};
+    for (var k in ON.cfg) if (Object.prototype.hasOwnProperty.call(ON.cfg, k)) o[k] = ON.cfg[k];
+    o.escuro = o.tema === 'escuro'; // só guarda "escuro" quando foi escolha; o resto segue o aparelho
+    store.set(ON.config.id + '.cfg', o);
     aplicarConfig();
     if (typeof ON.config.aoMudarConfig === 'function') ON.config.aoMudarConfig(ON.cfg);
+  }
+
+  /* o aparelho trocou claro/escuro: acompanha, se a pessoa não escolheu um tema */
+  function aoMudarSistema() {
+    if (!ON.config || ON.cfg.tema) return;
+    ON.cfg.escuro = sistemaEscuro();
+    aplicarConfig();
+    sincronizarTema();
+    if (typeof ON.config.aoMudarConfig === 'function') ON.config.aoMudarConfig(ON.cfg);
+  }
+
+  function sincronizarTema() {
+    var inp = document.querySelector('input[data-cfg="escuro"]');
+    if (inp) inp.checked = !!ON.cfg.escuro;
+    trocar(document.querySelector('.ic[data-ic="escuro"]'), !!ON.cfg.escuro);
   }
 
   /* ---------- camadas: menu e modais (uma por vez) ---------- */
@@ -191,10 +287,54 @@
     );
   }
 
+  /* Botão Voltar (Android, gesto, navegador): enquanto há menu ou modal aberto, ele existe como
+     uma entrada extra no histórico. Voltar fecha a camada e a página continua onde estava.
+       temEntrada      = a entrada extra existe agora
+       voltasPendentes = voltas que o próprio código pediu (history.back) e ainda não chegaram
+       querEntrada     = abriu uma camada enquanto ainda havia volta pendente: a entrada é criada
+                         assim que a volta terminar (evita a corrida entre back() e pushState()) */
+  var temEntrada = false, voltasPendentes = 0, querEntrada = false;
+
+  function garantirEntrada() {
+    if (temEntrada || querEntrada) return;
+    if (voltasPendentes > 0) { querEntrada = true; return; }
+    try { history.pushState({ on: 1 }, ''); temEntrada = true; } catch (e) { /* sem histórico: só não fecha pelo Voltar */ }
+  }
+
+  function soltarEntrada() {
+    if (querEntrada) { querEntrada = false; return; }
+    if (!temEntrada) return;
+    temEntrada = false;
+    voltasPendentes++;
+    try { history.back(); } catch (e) { voltasPendentes--; }
+  }
+
+  function aoVoltar(e) {
+    if (voltasPendentes > 0) {          // volta que o código pediu: só contabiliza
+      voltasPendentes--;
+      if (voltasPendentes === 0 && querEntrada) {
+        querEntrada = false;
+        if (camadaAtual) garantirEntrada();
+      }
+      return;
+    }
+    if (temEntrada) {                   // o usuário apertou Voltar com algo aberto: fecha e fica na página
+      temEntrada = false;
+      fecharCamada();
+      return;
+    }
+    if (!camadaAtual && e.state && e.state.on) { // "Avançar" caiu numa entrada vazia: pula
+      voltasPendentes++;
+      try { history.back(); } catch (x) { voltasPendentes--; }
+    }
+  }
+
   function abrirCamada(node, tipo) {
-    if (camadaAtual && camadaAtual.node !== node) fecharCamada(true);
+    if (!overlay || !node) return;
     if (camadaAtual && camadaAtual.node === node) return;
-    focoAnterior = document.activeElement;
+    var trocando = !!camadaAtual;
+    if (trocando) fecharCamada(true, true); // troca de camada: a entrada do histórico continua a mesma
+    if (!trocando) focoAnterior = document.activeElement; // ao fechar, o foco volta para quem abriu
     camadaAtual = { node: node, tipo: tipo };
     if (tipo === 'drawer') {
       node.classList.add('open');
@@ -205,11 +345,13 @@
     }
     overlay.hidden = false;
     html.classList.add('trava');
+    garantirEntrada();
     var alvo = node.querySelector('[data-foco]') || focaveis(node)[0];
-    if (alvo) setTimeout(function () { alvo.focus({ preventScroll: true }); }, 30);
+    if (alvo) setTimeout(function () { if (camadaAtual && camadaAtual.node === node) alvo.focus({ preventScroll: true }); }, 30);
   }
 
-  function fecharCamada(semFoco) {
+  /* manterHistorico: a camada está sendo trocada por outra, então a entrada extra não sai */
+  function fecharCamada(semFoco, manterHistorico) {
     if (!camadaAtual) return;
     var c = camadaAtual;
     camadaAtual = null;
@@ -218,9 +360,10 @@
     overlay.hidden = true;
     html.classList.remove('trava');
     if (!semFoco && focoAnterior && focoAnterior.focus) focoAnterior.focus({ preventScroll: true });
+    if (!manterHistorico) soltarEntrada();
     var cb = aoFechar;
     aoFechar = null;
-    if (cb) cb();
+    if (cb) { try { cb(); } catch (e) { /* um erro do jogo não trava o menu */ } }
   }
 
   ON.modal = {
@@ -232,25 +375,31 @@
     aberto: function () { return !!camadaAtual; }
   };
 
-  /* Confirmação padronizada. Resolve true/false. */
+  /* Confirmação padronizada. Resolve true/false. Só existe uma por vez: se pedirem outra enquanto
+     uma está aberta, a anterior termina com false (nenhuma promessa fica pendurada). */
   ON.confirmar = function (opcoes) {
     var o = opcoes || {};
+    if (!document.getElementById('confirm-modal')) montarModalConfirmacao();
     var m = document.getElementById('confirm-modal');
+    if (!m || !overlay) return Promise.resolve(false);
+    if (confirmacao) { var anterior = confirmacao; confirmacao = null; anterior(false); }
     m.querySelector('#confirm-title').textContent = o.titulo || 'Tem certeza?';
     m.querySelector('#confirm-text').textContent = o.texto || '';
     m.querySelector('#confirm-yes').textContent = o.sim || 'Sim';
     m.querySelector('#confirm-no').textContent = o.nao || 'Cancelar';
     return new Promise(function (resolve) {
       var feito = false;
+      var aoFecharEsta = function () { fim(false); };
       function fim(v) {
         if (feito) return;
         feito = true;
-        aoFechar = null;
+        if (confirmacao === fim) confirmacao = null;
+        if (aoFechar === aoFecharEsta) aoFechar = null;
         resolve(v);
       }
-      m._resolver = fim;
+      confirmacao = fim;
       abrirCamada(m, 'modal');
-      aoFechar = function () { fim(false); };
+      aoFechar = aoFecharEsta;
     });
   };
 
@@ -339,38 +488,65 @@
   };
 
   /* ---------- estatísticas ---------- */
+  /* O HTML personalizado (l.html) passa por uma lista de permissões: só tags de texto/bloco simples,
+     só os atributos class e style (com valores seguros) e nada de script, link ou evento. */
+  var TAGS_OK = { DIV: 1, SPAN: 1, I: 1, B: 1, STRONG: 1, EM: 1, SMALL: 1, BR: 1 };
+  var STYLE_OK = /^\s*(width|height|min-width|opacity)\s*:\s*[\d.]+(%|px|em|rem)?\s*;?\s*$/i;
+
+  function limparNo(origem, destino) {
+    Array.prototype.forEach.call(origem.childNodes, function (n) {
+      if (n.nodeType === 3) { destino.appendChild(document.createTextNode(n.nodeValue)); return; }
+      if (n.nodeType !== 1 || !TAGS_OK[n.tagName]) return;
+      var c = document.createElement(n.tagName.toLowerCase());
+      var cls = n.getAttribute('class');
+      if (cls && /^[\w\- ]+$/.test(cls)) c.setAttribute('class', cls);
+      var st = n.getAttribute('style');
+      if (st && STYLE_OK.test(st)) c.setAttribute('style', st);
+      limparNo(n, c);
+      destino.appendChild(c);
+    });
+  }
+
+  function htmlSeguro(texto, destino) {
+    var doc = new DOMParser().parseFromString('<body>' + String(texto) + '</body>', 'text/html');
+    limparNo(doc.body, destino);
+  }
+
   function preencherEstatisticas() {
     var box = document.getElementById('stats');
     var cfg = ON.config;
-    if (!box || typeof cfg.estatisticas !== 'function') return;
+    if (!box || !cfg || typeof cfg.estatisticas !== 'function') return;
     var linhas;
     try { linhas = cfg.estatisticas() || []; } catch (e) { linhas = []; }
     box.textContent = '';
     linhas.forEach(function (l) {
-      if (l.html) {
+      if (!l) return;
+      if (l.html != null) {
         var d = el('div', { class: 'barras' });
-        d.innerHTML = l.html; // html montado pelo próprio jogo (sem dados externos)
+        htmlSeguro(l.html, d);
         box.appendChild(d);
         return;
       }
       var s = el('div', { class: 'stat' + (l.larga ? ' larga' : '') });
       if (l.larga) {
-        s.appendChild(el('span', { text: l.rotulo }));
+        s.appendChild(el('span', { text: String(l.rotulo) }));
         s.appendChild(el('b', { text: String(l.valor) }));
       } else {
         s.appendChild(el('b', { text: String(l.valor) }));
-        s.appendChild(el('span', { text: l.rotulo }));
+        s.appendChild(el('span', { text: String(l.rotulo) }));
       }
       box.appendChild(s);
     });
   }
 
   /* ---------- montagem do menu ---------- */
-  /* ícone de cada opção; som e modo escuro mudam conforme o estado */
+  /* ícone de cada opção; som, vibração e modo escuro mudam conforme o estado */
   function iconeOpcao(k) {
     if (k === 'som') return iconeSom(ON.cfg.som, 20);
     if (k === 'escuro') return iconeTroca('sol', 'lua', ON.cfg.escuro, 20);
-    return icone({ vibracao: 'vibracao', reduzir: 'tartaruga', tremor: 'tremor' }[k], 20);
+    if (k === 'vibracao') return iconeVibracao(ON.cfg.vibracao, 20);
+    if (k === 'tremor') return iconeTremor(ON.cfg.tremor, 20);
+    return icone({ reduzir: 'tartaruga' }[k], 20);
   }
 
   function tituloSecao(id, nomeIcone, texto) {
@@ -389,14 +565,20 @@
     }
     drawer.textContent = '';
 
+    /* Cabeçalho FORA da área que rola: fica sempre no topo e, como é o mesmo fundo do menu,
+       tem exatamente a mesma cor. O X tem ouvinte próprio (não depende do ouvinte geral). */
+    var x = el('button', { id: 'close-drawer', type: 'button', 'aria-label': 'Fechar menu', 'data-foco': '', text: '✕' });
+    ouvir(x, 'click', function (e) { e.preventDefault(); fecharCamada(); });
     drawer.appendChild(el('div', { class: 'drawer-header' }, [
       el('span', { class: 'ic', html: icone('estrela', 20) }),
       el('h2', { text: 'Menu' }),
-      el('button', { id: 'close-drawer', type: 'button', 'aria-label': 'Fechar menu', 'data-fechar': '', 'data-foco': '', text: '✕' })
+      x
     ]));
+    var corpo = el('div', { class: 'drawer-rolagem' });
+    drawer.appendChild(corpo);
 
     // 1. outros jogos: um único atalho para a hub (a lista de jogos mora lá)
-    drawer.appendChild(el('section', { class: 'd-sec', 'aria-label': 'Outros jogos' }, [
+    corpo.appendChild(el('section', { class: 'd-sec', 'aria-label': 'Outros jogos' }, [
       el('a', { class: 'linha', href: HUB, target: '_blank', rel: 'noopener' }, [
         el('span', { class: 'ic', html: icone('casa', 20) }),
         el('span', { text: 'Outros Jogos' })
@@ -413,7 +595,7 @@
         var z = el('button', { class: 'd-link', type: 'button', id: 'zerar-stats', text: 'Zerar estatísticas' });
         sec.appendChild(z);
       }
-      drawer.appendChild(sec);
+      corpo.appendChild(sec);
     }
 
     // 3. configurações
@@ -431,14 +613,15 @@
         inp, el('i', { class: 'sw', 'aria-hidden': 'true' })
       ]));
     });
-    drawer.appendChild(secCfg);
+    corpo.appendChild(secCfg);
 
     // 4. instalar app (só aparece quando o navegador permite)
     var btnInstalar = el('button', { id: 'install-btn', class: 'btn btn-primary', type: 'button', hidden: '' }, [
       el('span', { class: 'ic', html: icone('baixar', 18) }),
       el('span', { text: 'Instalar app' })
     ]);
-    drawer.appendChild(btnInstalar);
+    corpo.appendChild(btnInstalar);
+    if (instalar) btnInstalar.hidden = false; // o navegador avisou antes do menu existir
 
     // 5. redes em acordeão (só as redes recolhem)
     var lis = REDES.map(function (r) {
@@ -449,7 +632,7 @@
     var painel = el('div', { class: 'acc-panel', id: 'acc-redes', role: 'region', 'aria-labelledby': 'acc-btn' }, [
       el('div', null, [el('ul', { class: 'redes' }, lis)])
     ]);
-    drawer.appendChild(el('div', { class: 'acc' }, [
+    corpo.appendChild(el('div', { class: 'acc' }, [
       el('button', { class: 'acc-btn', id: 'acc-btn', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'acc-redes' }, [
         el('span', { class: 'opc-txt' }, [el('span', { class: 'ic', html: icone('compartilhar', 18) }), el('span', { text: 'Minhas redes' })]),
         el('span', { class: 'ic', html: icone('chevron', 18) })
@@ -457,16 +640,17 @@
       painel
     ]));
 
-    // 6. parte fixa: linha, pix, assinatura
+    // 6. parte fixa no fim: traço, pix, traço, assinatura
     var rodape = el('div', { class: 'drawer-footer' });
-    var frame = el('div', { class: 'pix-frame', 'aria-hidden': 'true' });
-    frame.appendChild(el('pre', { text: '╔═══════════════•⊱✦⊰•═══════════════╗\nMe manda um pix?     ฅ^>⩊<^ ฅ\n╚═══════════════•⊱✦⊰•═══════════════╝' }));
-    rodape.appendChild(frame);
-    rodape.appendChild(el('img', { id: 'qrpix', src: 'assets/qrpix.png', alt: 'QR Pix - Apoie o criador', loading: 'lazy', decoding: 'async', width: '200', height: '200' }));
+    if (cfg.pix !== false) {
+      var frame = el('div', { class: 'pix-frame', 'aria-hidden': 'true' });
+      frame.appendChild(el('pre', { text: '╔═══════════════•⊱✦⊰•═══════════════╗\nMe manda um pix?     ฅ^>⩊<^ ฅ\n╚═══════════════•⊱✦⊰•═══════════════╝' }));
+      rodape.appendChild(frame);
+      rodape.appendChild(el('img', { id: 'qrpix', src: cfg.qrpix || 'assets/qrpix.png', alt: 'QR Pix - Apoie o criador', loading: 'lazy', decoding: 'async', width: '200', height: '200' }));
+      ajustarPix(frame.firstChild);
+    }
     rodape.appendChild(el('div', { class: 'assinatura', text: '✩₊˚.⋆ Somos o Universo! ⋆⁺₊✧' }));
-    drawer.appendChild(rodape);
-    drawer.appendChild(el('div', { class: 'drawer-fim', 'aria-hidden': 'true' }));
-    ajustarPix(frame.firstChild);
+    corpo.appendChild(rodape);
   }
 
   // Garante que o quadro do Pix caiba numa linha só, qualquer que seja a fonte do aparelho
@@ -481,7 +665,11 @@
       }
     }
     caber();
-    if (window.ResizeObserver) new ResizeObserver(caber).observe(pre.parentNode);
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(caber);
+      ro.observe(pre.parentNode);
+      ouvintes.push([{ removeEventListener: function () { ro.disconnect(); } }, '', null]);
+    }
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(caber);
   }
 
@@ -500,9 +688,9 @@
     document.body.appendChild(m);
   }
 
-  /* ---------- eventos (delegação: um ouvinte para tudo) ---------- */
+  /* ---------- eventos (delegação: um ouvinte para os cliques do documento) ---------- */
   function ligarEventos() {
-    document.addEventListener('click', function (e) {
+    ouvir(document, 'click', function (e) {
       var t = e.target;
       if (!(t instanceof Element)) return;
 
@@ -516,8 +704,9 @@
       if (t === overlay) { fecharCamada(); return; }
 
       if (t.closest('#confirm-yes')) {
-        var m = document.getElementById('confirm-modal');
-        var r = m._resolver; aoFechar = null;
+        var r = confirmacao;
+        confirmacao = null;
+        aoFechar = null;
         fecharCamada(true);
         if (r) r(true);
         return;
@@ -525,8 +714,10 @@
       if (t.closest('#confirm-no')) { fecharCamada(); return; }
 
       // acordeão genérico: qualquer .acc-btn abre e fecha o painel indicado em aria-controls
+      // (os jogos usam o mesmo componente nos próprios modais). Para um botão tratar o clique
+      // por conta própria, basta marcar data-proprio.
       var acc = t.closest('.acc-btn');
-      if (acc) {
+      if (acc && !acc.hasAttribute('data-proprio')) {
         var aberto = acc.getAttribute('aria-expanded') === 'true';
         acc.setAttribute('aria-expanded', String(!aberto));
         var painelAcc = document.getElementById(acc.getAttribute('aria-controls'));
@@ -535,9 +726,9 @@
       }
 
       if (t.closest('#zerar-stats')) {
-        fecharCamada(true);
+        // troca o menu pela confirmação (a entrada do Voltar passa de uma para a outra)
         ON.confirmar({ titulo: 'Zerar estatísticas?', texto: 'Seus recordes e contagens deste jogo serão apagados neste aparelho.', sim: 'Sim, zerar', nao: 'Cancelar' })
-          .then(function (ok) { if (ok) { ON.config.zerarEstatisticas(); } });
+          .then(function (ok) { if (ok && ON.config && ON.config.zerarEstatisticas) ON.config.zerarEstatisticas(); });
         return;
       }
 
@@ -545,23 +736,25 @@
         var ev = instalar;
         instalar = null;
         ev.prompt();
-        ev.userChoice.then(function () { document.getElementById('install-btn').hidden = true; });
+        ev.userChoice.then(function () { var b = document.getElementById('install-btn'); if (b) b.hidden = true; });
       }
     });
 
-    document.addEventListener('change', function (e) {
+    ouvir(document, 'change', function (e) {
       var i = e.target;
       if (!(i instanceof HTMLInputElement) || !i.hasAttribute('data-cfg')) return;
       var chave = i.getAttribute('data-cfg');
       ON.cfg[chave] = i.checked;
+      if (chave === 'escuro') ON.cfg.tema = i.checked ? 'escuro' : 'claro'; // virou escolha da pessoa
       salvarConfig();
       var marca = document.querySelector('.ic[data-ic="' + chave + '"]');
-      if (chave === 'som' || chave === 'escuro') trocar(marca, i.checked);   // troca com transição
-      if (i.getAttribute('data-cfg') === 'som' && i.checked) ON.som('acerto');
-      if (i.getAttribute('data-cfg') === 'vibracao' && i.checked) ON.vibrar(30);
+      if (chave === 'som' || chave === 'escuro' || chave === 'vibracao') trocar(marca, i.checked); // troca com transição
+      if (chave === 'som' && i.checked) ON.som('acerto');
+      if (chave === 'vibracao' && i.checked) ON.vibrar(30);
+      if (chave === 'tremor') atualizarTremorIcone(marca, i.checked);
     });
 
-    document.addEventListener('keydown', function (e) {
+    ouvir(document, 'keydown', function (e) {
       if (!camadaAtual) return;
       if (e.key === 'Escape') { e.preventDefault(); fecharCamada(); return; }
       if (e.key === 'Tab') {
@@ -573,21 +766,40 @@
       }
     });
 
-    window.addEventListener('beforeinstallprompt', function (e) {
+    ouvir(window, 'popstate', aoVoltar);
+
+    ouvir(window, 'beforeinstallprompt', function (e) {
       e.preventDefault();
       instalar = e;
       var b = document.getElementById('install-btn');
       if (b) b.hidden = false;
     });
-    window.addEventListener('appinstalled', function () {
+    ouvir(window, 'appinstalled', function () {
       instalar = null;
       var b = document.getElementById('install-btn');
       if (b) b.hidden = true;
     });
+
+    if (mqEscuro) {
+      if (mqEscuro.addEventListener) ouvir(mqEscuro, 'change', aoMudarSistema);
+      else if (mqEscuro.addListener) { // Safari antigo
+        mqEscuro.addListener(aoMudarSistema);
+        ouvintes.push([{ removeEventListener: function () { mqEscuro.removeListener(aoMudarSistema); } }, '', null]);
+      }
+    }
   }
 
   /* ---------- inicialização ---------- */
   ON.init = function (config) {
+    if (iniciado) {
+      if (window.console) console.warn('ON.init: já foi iniciado, a segunda chamada foi ignorada.');
+      return;
+    }
+    if (!config || !config.id) {
+      if (window.console) console.error('ON.init: falta o id do jogo.');
+      return;
+    }
+    iniciado = true;
     ON.config = config;
     ON.cfg = lerConfig(config.id);
     aplicarConfig();
@@ -598,18 +810,31 @@
         overlay = el('div', { id: 'overlay', hidden: '' });
         document.body.appendChild(overlay);
       }
+      // sobrou uma entrada do menu de uma visita anterior (recarregou com o menu aberto): limpa
+      try { if (history.state && history.state.on) history.replaceState(null, ''); } catch (e) { /* ignora */ }
       montarMenu();
       montarModalConfirmacao();
       ligarEventos();
       if (typeof config.pronto === 'function') config.pronto();
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar, { once: true });
     else iniciar();
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
         navigator.serviceWorker.register('./service-worker.js').catch(function () { /* sem offline, segue */ });
-      });
+      }, { once: true });
     }
+  };
+
+  /* Desfaz o que o ON.init montou nos ouvintes (útil em testes ou se o jogo recomeçar do zero) */
+  ON.destruir = function () {
+    if (camadaAtual) fecharCamada(true);
+    ouvintes.forEach(function (o) { try { o[0].removeEventListener(o[1], o[2], o[3]); } catch (e) { /* ignora */ } });
+    ouvintes = [];
+    temEntrada = false; querEntrada = false; voltasPendentes = 0;
+    confirmacao = null;
+    aoFechar = null;
+    iniciado = false;
   };
 })();

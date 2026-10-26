@@ -168,9 +168,15 @@
     const margem = Math.max(4, gap);
     const wFit = Math.floor((W - margem * 2 - gap * (COLS - 1)) / COLS);
     const topAbs = el.box.getBoundingClientRect().top + window.scrollY;
-    const disp = Math.max(300, window.innerHeight - 20 - Math.min(topAbs, window.innerHeight * 0.45));
+    const IH = window.innerHeight, IW = window.innerWidth;
+    /* Altura que a mesa pode ocupar. Em tela deitada baixa (celular na horizontal) a mesa não precisa
+       caber inteira de uma vez: a página rola, então a altura útil é maior que a visível. Isso deixa a carta
+       proporcional à tela em vez de minúscula. No PC a folga é pequena (as colunas se comprimem sozinhas). */
+    const curta = IW > IH && IH < 520;
+    const folga = curta ? 1.35 : (IW > IH && IW >= 900 ? 1.08 : 1);
+    const disp = Math.max(300, IH - 20 - Math.min(topAbs, IH * 0.45)) * folga;
     const wAlt = Math.floor(disp / mo.alturaRel / C.RAZAO);
-    const w = Math.max(MIN_W, Math.min(wFit, 120, wAlt));
+    const w = Math.max(MIN_W, Math.min(wFit, 140, wAlt));
     const h = Math.round(w * C.RAZAO);
     const util = COLS * w + (COLS - 1) * gap;
     const x0 = Math.max(margem, Math.round((W - util) / 2));
@@ -801,6 +807,15 @@
     }
   }
 
+  /* No fim da partida as cartas já estão nas fundações e a mesa encolhe. A caixa da vitória (e a
+     cascata de cartas) precisa de mais altura: a mesa cresce para ocupar a tela, pelo menos o que o
+     cartão de vitória pede. */
+  function alturarVitoria() {
+    const util = window.innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 60) - 24;
+    const alvo = Math.round(Math.max(340, Math.min(560, util)));
+    if (el.mesa.clientHeight < alvo) el.mesa.style.height = alvo + 'px';
+  }
+
   function ganhar() {
     venceu = true;
     limparDica(); desselecionar();
@@ -817,12 +832,17 @@
     ON.som('vitoria');
     ON.impacto(el.box, 'vitoria');
     atualizarPainel();
+    alturarVitoria();
     cascata();
     el.telaTitulo.textContent = 'Você venceu!';
     el.telaTexto.textContent = mo.nome + '. ' + (comPontos ? 'Pontuação ' + S.pts + (recPontos ? ' (novo recorde)' : '') + '. ' : '') +
       'Tempo ' + fmt(tempoMs) + (recTempo ? ' (novo recorde)' : '') + '. ' + S.jog + ' jogadas.';
     el.telaBtn.textContent = 'Novo jogo';
-    setTimeout(() => { if (venceu) el.tela.hidden = false; }, reduzido() ? 100 : 2600);
+    setTimeout(() => {
+      if (!venceu) return;
+      el.tela.hidden = false;
+      el.box.scrollIntoView({ block: 'center', behavior: reduzido() ? 'auto' : 'smooth' });
+    }, reduzido() ? 100 : 2600);
   }
 
   el.telaBtn.addEventListener('click', () => { recomecar(); });

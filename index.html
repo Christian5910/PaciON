@@ -10,9 +10,10 @@
   <link rel="icon" href="assets/favicon.ico" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <script>/* aplica tema e animações antes de pintar (evita "piscar") */
-  try{var c=JSON.parse(localStorage.getItem('pacion.cfg')||'{}'),d=document.documentElement,r=c.reduzir;
-  if(r===undefined)r=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(c.escuro)d.setAttribute('data-tema','escuro');if(r)d.setAttribute('data-reduzir','1')}catch(e){}</script>
+  try{var c={};try{c=JSON.parse(localStorage.getItem('pacion.cfg')||'{}')||{}}catch(e){}var d=document.documentElement,r=c.reduzir,t=c.tema;
+  if(t!=='escuro'&&t!=='claro')t=c.escuro===true?'escuro':null;
+  if(r===undefined||r===null)r=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(t?t==='escuro':matchMedia('(prefers-color-scheme: dark)').matches)d.setAttribute('data-tema','escuro');if(r)d.setAttribute('data-reduzir','1')}catch(e){}</script>
   <link rel="stylesheet" href="on.css" />
   <link rel="stylesheet" href="cartas.css" />
   <link rel="stylesheet" href="colorido.css" />
